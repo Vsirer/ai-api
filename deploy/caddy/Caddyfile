@@ -1,0 +1,65 @@
+{
+	email {$ACME_EMAIL}
+	on_demand_tls {
+		ask http://{$SUB_SITE_TLS_ASK_UPSTREAM:new-api:3000}/api/sub-site/tls/allow
+	}
+}
+
+(common_proxy) {
+	header_up X-Real-IP {remote_host}
+	header_up X-Forwarded-Proto {scheme}
+	header_up X-Forwarded-Host {host}
+	transport http {
+		read_timeout 600s
+		write_timeout 600s
+	}
+}
+
+(app_routes) {
+	handle_path /site-static/* {
+		encode zstd gzip
+		root * /srv/site-static
+		file_server
+	}
+
+	@cluster path /v1/* /v1beta/*
+	reverse_proxy @cluster {$APP_UPSTREAMS:new-api:3000} {
+		import common_proxy
+	}
+
+	reverse_proxy new-api:3000 {
+		import common_proxy
+	}
+}
+
+{$CADDY_DOMAINS} {
+	# 模型接口走集群，其它请求回主节点，避免本地状态丢失。
+	import app_routes
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 100mb
+			roll_keep 10
+			roll_keep_for 720h
+		}
+		format json
+	}
+}
+
+# 分站自定义域名，签发证书前由主节点校验准入。
+https:// {
+	tls {
+		on_demand
+	}
+
+	import app_routes
+
+	log {
+		output file /var/log/caddy/sub-site-access.log {
+			roll_size 100mb
+			roll_keep 10
+			roll_keep_for 720h
+		}
+		format json
+	}
+}

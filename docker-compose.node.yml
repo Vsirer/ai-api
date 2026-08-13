@@ -1,0 +1,50 @@
+name: ${COMPOSE_PROJECT_NAME:-new-api}
+
+services:
+  new-api:
+    image: ${NEW_API_IMAGE:-new-api}:${NEW_API_VERSION}
+    container_name: ${APP_CONTAINER_NAME:-new-api}
+    restart: unless-stopped
+    command: --log-dir /app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    env_file:
+      - .env
+    environment:
+      PORT: "3000"
+      NODE_TYPE: ${NODE_TYPE:-master}
+      NODE_NAME: ${NODE_NAME:-new-api-node-1}
+      SQL_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}?sslmode=${POSTGRES_SSLMODE:-disable}
+      REDIS_CONN_STRING: redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/${REDIS_DB:-0}
+      FRONTEND_BASE_URL: https://${DOMAIN}
+      TZ: ${TZ:-Asia/Shanghai}
+      ERROR_LOG_ENABLED: ${ERROR_LOG_ENABLED:-true}
+      BATCH_UPDATE_ENABLED: ${BATCH_UPDATE_ENABLED:-true}
+      MEMORY_CACHE_ENABLED: ${MEMORY_CACHE_ENABLED:-true}
+      CHANNEL_UPDATE_FREQUENCY: ${CHANNEL_UPDATE_FREQUENCY:-30}
+      BATCH_UPDATE_INTERVAL: ${BATCH_UPDATE_INTERVAL:-5}
+      STREAMING_TIMEOUT: ${STREAMING_TIMEOUT:-300}
+      GENERATE_DEFAULT_TOKEN: ${GENERATE_DEFAULT_TOKEN:-false}
+      SESSION_SECRET: ${SESSION_SECRET}
+      CRYPTO_SECRET: ${CRYPTO_SECRET:-}
+    ports:
+      - "${APP_BIND_IP:-127.0.0.1}:${APP_PORT:-3000}:3000"
+    volumes:
+      - ./data:/data
+      - ./logs/app:/app/logs
+    networks:
+      - new-api-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -o '\"success\":\\s*true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  new-api-network:
+    name: ${COMPOSE_PROJECT_NAME:-new-api}_new-api-network
+    driver: bridge

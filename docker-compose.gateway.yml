@@ -1,0 +1,37 @@
+name: ${COMPOSE_PROJECT_NAME:-new-api}
+
+services:
+  caddy:
+    image: caddy:2.8.4-alpine
+    container_name: ${CADDY_CONTAINER_NAME:-new-api-caddy}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      CADDY_DOMAINS: ${CADDY_DOMAINS:-${DOMAIN}}
+    ports:
+      - "${HTTP_BIND_IP:-0.0.0.0}:80:80"
+      - "${HTTPS_BIND_IP:-0.0.0.0}:443:443"
+      - "${HTTPS_BIND_IP:-0.0.0.0}:443:443/udp"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./site-static:/srv/site-static:ro
+      - ./logs/caddy:/var/log/caddy
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+    networks:
+      - new-api-network
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  new-api-network:
+    name: ${COMPOSE_PROJECT_NAME:-new-api}_new-api-network
+    driver: bridge
