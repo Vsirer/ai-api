@@ -1,0 +1,18 @@
+# File path: /etc/systemd/system/ai-api.service
+# sudo systemctl daemon-reload
+# sudo systemctl start ai-api
+# sudo systemctl enable ai-api
+# sudo systemctl status ai-api
+[Unit]
+Description=AI API Service
+After=network.target
+
+[Service]
+User=ubuntu  # 注意修改用户名
+WorkingDirectory=/path/to/ai-api  # 注意修改路径
+ExecStart=/path/to/ai-api/ai-api --port 3000 --log-dir /path/to/ai-api/logs  # 注意修改路径、二进制文件名和端口号
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

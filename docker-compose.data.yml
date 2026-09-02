@@ -1,9 +1,9 @@
-name: ${COMPOSE_PROJECT_NAME:-new-api}
+name: ${COMPOSE_PROJECT_NAME:-ai-api}
 
 services:
   postgres:
     image: postgres:16.4-alpine
-    container_name: ${POSTGRES_CONTAINER_NAME:-new-api-postgres}
+    container_name: ${POSTGRES_CONTAINER_NAME:-ai-api-postgres}
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -20,7 +20,7 @@ services:
         max-size: "20m"
         max-file: "3"
     networks:
-      - new-api-network
+      - ai-api-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s
@@ -29,7 +29,7 @@ services:
 
   redis:
     image: redis:7.4.0-alpine
-    container_name: ${REDIS_CONTAINER_NAME:-new-api-redis}
+    container_name: ${REDIS_CONTAINER_NAME:-ai-api-redis}
     restart: unless-stopped
     command: ["sh", "-c", "redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
     environment:
@@ -45,7 +45,7 @@ services:
         max-size: "20m"
         max-file: "3"
     networks:
-      - new-api-network
+      - ai-api-network
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
       interval: 10s
@@ -57,6 +57,6 @@ volumes:
   redis_data:
 
 networks:
-  new-api-network:
-    name: ${COMPOSE_PROJECT_NAME:-new-api}_new-api-network
+  ai-api-network:
+    name: ${COMPOSE_PROJECT_NAME:-ai-api}_ai-api-network
     driver: bridge

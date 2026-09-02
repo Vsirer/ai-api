@@ -1,12 +1,12 @@
-name: ${COMPOSE_PROJECT_NAME:-new-api}
+name: ${COMPOSE_PROJECT_NAME:-ai-api}
 
 services:
-  new-api:
-    image: ${NEW_API_IMAGE:-new-api}:${NEW_API_VERSION:-v2026.05.11}
+  ai-api:
+    image: ${NEW_API_IMAGE:-ai-api}:${NEW_API_VERSION:-v2026.05.11}
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: new-api
+    container_name: ${APP_CONTAINER_NAME:-ai-api}
     restart: unless-stopped
     command: --log-dir /app/logs
     logging:
@@ -25,7 +25,7 @@ services:
       ERROR_LOG_ENABLED: ${ERROR_LOG_ENABLED:-true}
       BATCH_UPDATE_ENABLED: ${BATCH_UPDATE_ENABLED:-true}
       SESSION_SECRET: ${SESSION_SECRET}
-      NODE_NAME: ${NODE_NAME:-new-api-prod-1}
+      NODE_NAME: ${NODE_NAME:-ai-api-prod-1}
     volumes:
       - ./data:/data
       - ./logs/app:/app/logs
@@ -37,7 +37,7 @@ services:
     expose:
       - "3000"
     networks:
-      - new-api-network
+      - ai-api-network
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -o '\"success\":\\s*true' || exit 1"]
       interval: 30s
@@ -47,7 +47,7 @@ services:
 
   postgres:
     image: postgres:16.4-alpine
-    container_name: new-api-postgres
+    container_name: ${POSTGRES_CONTAINER_NAME:-ai-api-postgres}
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -62,7 +62,7 @@ services:
         max-size: "20m"
         max-file: "3"
     networks:
-      - new-api-network
+      - ai-api-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s
@@ -71,7 +71,7 @@ services:
 
   redis:
     image: redis:7.4.0-alpine
-    container_name: new-api-redis
+    container_name: ${REDIS_CONTAINER_NAME:-ai-api-redis}
     restart: unless-stopped
     command: ["sh", "-c", "redis-server --appendonly yes --requirepass \"$${REDIS_PASSWORD}\""]
     environment:
@@ -85,7 +85,7 @@ services:
         max-size: "20m"
         max-file: "3"
     networks:
-      - new-api-network
+      - ai-api-network
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG"]
       interval: 10s
@@ -94,7 +94,7 @@ services:
 
   caddy:
     image: caddy:2.8.4-alpine
-    container_name: new-api-caddy
+    container_name: ${CADDY_CONTAINER_NAME:-ai-api-caddy}
     restart: unless-stopped
     env_file:
       - .env
@@ -114,10 +114,10 @@ services:
         max-size: "20m"
         max-file: "3"
     depends_on:
-      new-api:
+      ai-api:
         condition: service_healthy
     networks:
-      - new-api-network
+      - ai-api-network
 
 volumes:
   postgres_data:
@@ -126,5 +126,5 @@ volumes:
   caddy_config:
 
 networks:
-  new-api-network:
+  ai-api-network:
     driver: bridge

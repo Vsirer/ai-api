@@ -1,9 +1,9 @@
-name: ${COMPOSE_PROJECT_NAME:-new-api}
+name: ${COMPOSE_PROJECT_NAME:-ai-api}
 
 services:
   caddy:
     image: caddy:2.8.4-alpine
-    container_name: ${CADDY_CONTAINER_NAME:-new-api-caddy}
+    container_name: ${CADDY_CONTAINER_NAME:-ai-api-caddy}
     restart: unless-stopped
     env_file:
       - .env
@@ -25,13 +25,13 @@ services:
         max-size: "20m"
         max-file: "3"
     networks:
-      - new-api-network
+      - ai-api-network
 
 volumes:
   caddy_data:
   caddy_config:
 
 networks:
-  new-api-network:
-    name: ${COMPOSE_PROJECT_NAME:-new-api}_new-api-network
+  ai-api-network:
+    name: ${COMPOSE_PROJECT_NAME:-ai-api}_ai-api-network
     driver: bridge
